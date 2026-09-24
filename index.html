@@ -365,11 +365,11 @@
         {
           name: "Hvem er hvem?",
           clues: [
-            { clue: "Hvem er det?", answer: "Hvem er Lilo?", photo: "photos/hvem/lilo.svg" },
-            { clue: "Hvem er det?", answer: "Hvem er W?", photo: "photos/hvem/w.svg" },
-            { clue: "Hvem er det?", answer: "Hvem er N?", photo: "photos/hvem/n.svg" },
-            { clue: "Hvem er det?", answer: "Hvem er Nico?", photo: "photos/hvem/nico.svg" },
-            { clue: "Hvem er det?", answer: "Hvem er Nina?", photo: "photos/hvem/nina.svg" },
+            { clue: "Hvem er det?", answer: "Hvem er Lilo?", photo: "photos/hvem/1.png", answerPhoto: "photos/hvem/answers/1.png" },
+            { clue: "Hvem er det?", answer: "Hvem er W?", photo: "photos/hvem/2.png", answerPhoto: "photos/hvem/answers/2.png" },
+            { clue: "Hvem er det?", answer: "Hvem er N?", photo: "photos/hvem/3.png", answerPhoto: "photos/hvem/answers/3.png" },
+            { clue: "Hvem er det?", answer: "Hvem er Nico?", photo: "photos/hvem/4.png", answerPhoto: "photos/hvem/answers/4.png" },
+            { clue: "Hvem er det?", answer: "Hvem er Nina?", photo: "photos/hvem/5.png", answerPhoto: "photos/hvem/answers/5.png" },
           ],
         },
       ],
@@ -452,7 +452,7 @@
         photoQ.appendChild(qImg);
         photoQ.classList.add("visible");
         const aImg = document.createElement("img");
-        aImg.src = encodeURI(clue.photo);
+        aImg.src = encodeURI(clue.answerPhoto || clue.photo);
         aImg.alt = clue.answer;
         answerPhotos.appendChild(aImg);
       } else {
