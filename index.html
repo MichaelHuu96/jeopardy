@@ -575,7 +575,7 @@
         score.textContent = (team.score < 0 ? "−$" : "$") + Math.abs(team.score).toLocaleString();
         const adjust = document.createElement("div");
         adjust.className = "adjust";
-        [-100, 100].forEach((delta) => {
+        [100, -100].forEach((delta) => {
           const b = document.createElement("button");
           b.textContent = delta > 0 ? "+100" : "−100";
           b.addEventListener("click", () => {
