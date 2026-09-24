@@ -353,7 +353,7 @@
           ],
         },
         {
-          name: "Tredje gang i møllen",
+          name: "",
           clues: [
             { clue: "Hvor stort et aldersspænd bliver der præcis mellem storebrødrene og den nye baby?", answer: "Hvad er 1 år og 10 måneder og 3 år og 8 måneder (forudsat slut sep./start okt.)" },
             { clue: "Hvad var den største forskel på Ninas graviditet denne gang i forhold til, da hun ventede W og N?", answer: "Hvad er mere træt og kvalme (og mere snak end normalt)?" },
@@ -429,7 +429,7 @@
       const clue = cat.clues[row];
       state.current = { col, row, key, value: vals()[row], clue, cat };
 
-      $("#clue-value").textContent = `${cat.name} — $${vals()[row]}`;
+      $("#clue-value").textContent = cat.name ? `${cat.name} — $${vals()[row]}` : `$${vals()[row]}`;
       const answerEl = $("#clue-answer");
       answerEl.classList.remove("revealed");
       answerEl.textContent = clue.answer;
