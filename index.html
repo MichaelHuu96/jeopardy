@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baby Jeopardy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-1: #04041c;
+      --bg-2: #0b0b3b;
+      --tile-1: #1c2bd4;
+      --tile-2: #0913a8;
+      --tile-dark-1: #0a0f4d;
+      --tile-dark-2: #060a33;
+      --gold: #ffd447;
+      --gold-deep: #e6a817;
+      --white: #f4f5ff;
+      --muted: #7d86c9;
+      --green: #3ddc84;
+      --red: #ff5d5d;
+      --radius: 10px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(48, 60, 255, 0.35), transparent 60%),
+        radial-gradient(900px 500px at 85% 110%, rgba(255, 212, 71, 0.07), transparent 60%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2) 55%, var(--bg-1));
+      background-attachment: fixed;
+    }
+    header { text-align: center; padding: 28px 10px 14px; }
+    header h1 {
+      font-family: "Anton", sans-serif;
+      font-size: clamp(36px, 5.5vw, 68px);
+      letter-spacing: 10px;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #fff2b8 0%, var(--gold) 45%, var(--gold-deep) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 10px 24px rgba(255, 212, 71, 0.25));
+    }
+    header .tagline {
+      margin-top: 4px;
+      font-size: 12px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      padding: 18px clamp(10px, 3vw, 34px);
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      flex: 1;
+    }
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 78px;
+      border-radius: var(--radius);
+      user-select: none;
+    }
+    .category {
+      font-weight: 800;
+      font-size: clamp(11px, 1.3vw, 17px);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 10px 6px;
+      line-height: 1.25;
+      color: var(--white);
+      background: linear-gradient(180deg, #141d7a, #0b1157);
+      border: 1px solid rgba(120, 132, 255, 0.35);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 6px 18px rgba(0, 0, 0, 0.45);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+    }
+    .clue-cell {
+      position: relative;
+      color: var(--gold);
+      font-family: "Anton", sans-serif;
+      font-size: clamp(22px, 2.8vw, 40px);
+      letter-spacing: 1px;
+      cursor: pointer;
+      background: linear-gradient(160deg, var(--tile-1), var(--tile-2));
+      border: 1px solid rgba(120, 132, 255, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -14px 24px rgba(0, 0, 0, 0.28), 0 8px 20px rgba(0, 0, 0, 0.45);
+      text-shadow: 0 3px 6px rgba(0, 0, 0, 0.65);
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .clue-cell:hover {
+      transform: translateY(-3px) scale(1.02);
+      filter: brightness(1.15);
+    }
+    .clue-cell.used {
+      color: transparent;
+      text-shadow: none;
+      cursor: default;
+      background: linear-gradient(160deg, var(--tile-dark-1), var(--tile-dark-2));
+      border-color: rgba(120, 132, 255, 0.12);
+    }
+    .clue-cell.used:hover { transform: none; filter: none; }
+    #teams { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; padding: 8px 16px 4px; }
+    .team {
+      position: relative;
+      background: linear-gradient(180deg, rgba(20, 29, 122, 0.9), rgba(8, 11, 60, 0.9));
+      border: 1px solid rgba(120, 132, 255, 0.35);
+      border-radius: 14px;
+      padding: 14px 22px 12px;
+      text-align: center;
+      min-width: 170px;
+    }
+    .team.leader { border-color: rgba(255, 212, 71, 0.7); }
+    .team-name {
+      font-weight: 700; font-size: 14px; background: transparent; border: none;
+      border-bottom: 1px dashed transparent; color: var(--white); text-align: center; width: 100%; outline: none;
+    }
+    .team-name:hover, .team-name:focus { border-bottom-color: var(--muted); }
+    .team-score { font-family: "Anton", sans-serif; font-size: 32px; color: var(--gold); margin-top: 6px; }
+    .team-score.negative { color: var(--red); }
+    .team .remove-team {
+      position: absolute; top: 6px; right: 8px; background: none; border: none;
+      color: var(--muted); cursor: pointer; font-size: 13px; opacity: 0;
+    }
+    .team:hover .remove-team { opacity: 1; }
+    .team .adjust { margin-top: 8px; display: flex; gap: 8px; justify-content: center; }
+    .team .adjust button {
+      background: rgba(255, 255, 255, 0.07); color: var(--white);
+      border: 1px solid rgba(120, 132, 255, 0.35); border-radius: 6px;
+      padding: 3px 12px; cursor: pointer; font-size: 12px; font-weight: 600;
+    }
+    #controls { display: flex; justify-content: center; gap: 12px; padding: 14px 0 22px; flex-wrap: wrap; }
+    #controls button {
+      font-family: "Inter", sans-serif; font-weight: 700; font-size: 13px;
+      padding: 10px 20px; border-radius: 999px; cursor: pointer;
+      border: 1px solid rgba(120, 132, 255, 0.4);
+      background: rgba(255, 255, 255, 0.06); color: var(--white);
+    }
+    #controls button.primary {
+      background: linear-gradient(180deg, #fff2b8, var(--gold) 55%, var(--gold-deep));
+      color: #1a1400; border: none;
+    }
+    #controls button.armed, .editor-buttons button.armed {
+      background: linear-gradient(180deg, #ff8080, var(--red)) !important;
+      color: #3b0000 !important;
+    }
+    #overlay, #editor-overlay {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      z-index: 100; background: rgba(2, 2, 18, 0.72); backdrop-filter: blur(8px);
+    }
+    #overlay.open, #editor-overlay.open { display: flex; }
+    #editor-overlay { z-index: 200; }
+    #clue-card {
+      position: relative; width: min(940px, 94vw); max-height: 92vh; overflow-y: auto;
+      text-align: center; padding: clamp(28px, 5vw, 60px) clamp(22px, 5vw, 70px) 36px;
+      border-radius: 22px;
+      background: radial-gradient(800px 300px at 50% 0%, rgba(66, 80, 255, 0.4), transparent 70%),
+        linear-gradient(170deg, #1a25b8, #0a1076 60%, #070b52);
+      border: 1px solid rgba(140, 152, 255, 0.5);
+    }
+    #timer-bar {
+      position: absolute; top: 0; left: 0; height: 5px; border-radius: 22px 22px 0 0;
+      background: linear-gradient(90deg, var(--gold), #ff9d3f); width: 100%;
+    }
+    #clue-value {
+      display: inline-block; color: var(--gold); font-size: 13px; font-weight: 800;
+      letter-spacing: 3px; text-transform: uppercase; padding: 7px 18px;
+      border: 1px solid rgba(255, 212, 71, 0.45); border-radius: 999px;
+      background: rgba(255, 212, 71, 0.08); margin-bottom: 26px;
+    }
+    #clue-text {
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: clamp(22px, 3.2vw, 38px); font-weight: 700; line-height: 1.4;
+    }
+    #question-cover { display: none; font-size: clamp(18px, 2.4vw, 28px); font-weight: 700; color: #aab1e8; padding: 20px 0; }
+    #clue-card.question-hidden #clue-text,
+    #clue-card.question-hidden #photo-question { display: none !important; }
+    #clue-card.question-hidden #question-cover { display: block; }
+    #clue-card.answer-shown #photo-question { display: none !important; }
+    #clue-answer {
+      margin: 30px auto 0; font-size: clamp(19px, 2.6vw, 30px);
+      color: var(--gold); font-weight: 700; min-height: 40px; opacity: 0;
+      transform: translateY(8px); transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    #clue-answer.revealed { opacity: 1; transform: translateY(0); }
+    #award-buttons { margin-top: 26px; display: none; flex-wrap: wrap; gap: 12px; justify-content: center; }
+    #award-buttons.visible { display: flex; }
+    .award-group {
+      background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(120, 132, 255, 0.3);
+      border-radius: 12px; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; align-items: center;
+    }
+    .award-group .label { font-size: 13px; font-weight: 700; }
+    .award-group .row { display: flex; gap: 8px; }
+    .award-group button {
+      font-family: "Inter", sans-serif; font-size: 13px; font-weight: 800;
+      padding: 7px 16px; border-radius: 8px; border: none; cursor: pointer;
+    }
+    .award-group .correct { background: linear-gradient(180deg, #5cf0a1, var(--green)); color: #002d14; }
+    .award-group .wrong { background: linear-gradient(180deg, #ff8080, var(--red)); color: #3b0000; }
+    #clue-card .buttons { margin-top: 32px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    #clue-card .buttons button {
+      font-family: "Inter", sans-serif; font-size: 14px; font-weight: 700;
+      padding: 12px 28px; border-radius: 999px; cursor: pointer;
+    }
+    #reveal-btn { background: linear-gradient(180deg, #fff2b8, var(--gold) 55%, var(--gold-deep)); color: #1a1400; border: none; }
+    #close-btn { background: rgba(255, 255, 255, 0.07); color: var(--white); border: 1px solid rgba(120, 132, 255, 0.4); }
+    #photo-question { display: none; justify-content: center; margin-top: 22px; }
+    #photo-question.visible { display: flex; }
+    #photo-question img {
+      max-height: 46vh; max-width: min(86%, 520px); border-radius: 16px;
+      border: 3px solid rgba(255, 212, 71, 0.55); object-fit: contain;
+      background: rgba(0, 0, 0, 0.25);
+    }
+    #answer-photos { display: none; justify-content: center; gap: 18px; margin-top: 20px; flex-wrap: wrap; }
+    #answer-photos.revealed { display: flex; }
+    #answer-photos img {
+      max-height: 36vh; max-width: min(78vw, 420px); object-fit: contain;
+      border-radius: 12px; border: 2px solid rgba(140, 152, 255, 0.5);
+      background: rgba(0, 0, 0, 0.25);
+    }
+    footer { text-align: center; font-size: 11px; color: var(--muted); padding: 10px 10px 18px; }
+    #editor-card {
+      width: min(1100px, 96vw); max-height: 92vh; display: flex; flex-direction: column;
+      padding: 28px 30px 22px; border-radius: 22px;
+      background: linear-gradient(170deg, #131b8f, #0a1076 60%, #070b52);
+      border: 1px solid rgba(140, 152, 255, 0.5);
+    }
+    #editor-card h2 { font-family: "Anton", sans-serif; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); font-size: 24px; text-align: center; }
+    .editor-hint { text-align: center; color: var(--muted); font-size: 12px; margin: 6px 0 16px; }
+    #editor-body { overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 800px) { #editor-body { grid-template-columns: 1fr; } }
+    .editor-cat { background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(120, 132, 255, 0.3); border-radius: 12px; padding: 12px; }
+    .cat-name-input {
+      width: 100%; font-weight: 800; font-size: 14px; text-transform: uppercase;
+      color: var(--gold); background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 212, 71, 0.35); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px;
+    }
+    .editor-clue { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+    .value-tag { flex: 0 0 52px; font-family: "Anton", sans-serif; font-size: 14px; color: var(--gold); text-align: right; padding-top: 9px; }
+    .fields { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+    .editor-clue input, .editor-clue textarea {
+      width: 100%; font-family: "Inter", sans-serif; font-size: 13px; color: var(--white);
+      background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(120, 132, 255, 0.3);
+      border-radius: 7px; padding: 7px 10px; resize: vertical;
+    }
+    .editor-clue textarea { min-height: 48px; }
+    .editor-buttons { display: flex; justify-content: center; gap: 12px; padding-top: 16px; flex-wrap: wrap; }
+    .editor-buttons button {
+      font-family: "Inter", sans-serif; font-size: 14px; font-weight: 700;
+      padding: 11px 28px; border-radius: 999px; cursor: pointer;
+      border: 1px solid rgba(120, 132, 255, 0.4); background: rgba(255, 255, 255, 0.07); color: var(--white);
+    }
+    .editor-buttons .primary-btn {
+      background: linear-gradient(180deg, #fff2b8, var(--gold) 55%, var(--gold-deep));
+      color: #1a1400; border: none;
+    }
+    .editor-buttons .danger-btn { border-color: rgba(255, 93, 93, 0.5); color: #ffb3b3; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Jeopardy!</h1>
+    <div class="tagline">Tredje gang i møllen</div>
+  </header>
+
+  <div id="board"></div>
+  <div id="teams"></div>
+  <div id="controls">
+    <button id="add-team" class="primary">+ Add Team</button>
+    <button id="edit-questions">✏️ Edit Questions</button>
+    <button id="new-game">New Game</button>
+    <button id="reset-scores">Reset Scores</button>
+  </div>
+
+  <div id="overlay">
+    <div id="clue-card">
+      <div id="timer-bar"></div>
+      <div id="clue-value"></div>
+      <div id="clue-text"></div>
+      <div id="question-cover">🙈 Question hidden — press Space to show it</div>
+      <div id="photo-question"></div>
+      <div id="answer-photos"></div>
+      <div id="clue-answer"></div>
+      <div id="award-buttons"></div>
+      <div class="buttons">
+        <button id="reveal-btn">Reveal Answer</button>
+        <button id="close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="editor-overlay">
+    <div id="editor-card">
+      <h2>Edit Questions</h2>
+      <p class="editor-hint">Changes are saved in this browser. Tip: hit “New Game” after big edits.</p>
+      <div id="editor-body"></div>
+      <div class="editor-buttons">
+        <button id="editor-save" class="primary-btn">Save</button>
+        <button id="editor-cancel">Cancel</button>
+        <button id="editor-defaults" class="danger-btn">Restore Defaults</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Space hides the question · Enter reveals the answer · Esc closes</footer>
+
+  <script>
+    const DEFAULT_GAME = {
+      values: [100, 200, 300, 400, 500],
+      categories: [
+        {
+          name: "Det skal de huske",
+          clues: [
+            { clue: "Hvornår er det Sundhedsstyrelsens anbefaling, at give babyen dagligt d-vitamin?", answer: "Hvad er fra 2 uger gammelt?" },
+            { clue: "Hvor mange måneder har forældre i Danmark ifølge loven til at navngive deres nyfødte barn (enten ved dåb eller navngivning)?", answer: "Hvad er 6 måneder?" },
+            { clue: "Hvornår kan man skrive barnet op til dagtilbud i Odense Kommune?", answer: "Hvad er når barnet er født og har CPR?" },
+            { clue: "Hvor gammel skal en baby være (anbefalet), før babyen må komme ombord på flyet til en dejlig ferie sydpå?", answer: "Hvad er 8 dage?" },
+            { clue: "Hvilken myndighed eller instans i Danmark administrerer listen over godkendte fornavne og godkender nye navne?", answer: "Hvad er Familiestyrelsen / Familieretshuset?" },
+          ],
+        },
+        {
+          name: "Almen viden som forældre",
+          clues: [
+            { clue: "Hvad kalder man den sundhedsfaglige person, der kommer på hjemmebesøg hos nybagte forældre i Danmark for at veje babyen og give gode råd?", answer: "Hvem er sundhedsplejersken?" },
+            { clue: "Danmark er et af de få lande i verden, hvor det er helt normalt at lade babyen sove udenfor i sit transportmiddel. Hvad kaldes dette køretøj?", answer: "Hvad er en barnevogn?" },
+            { clue: "Hvad hedder den lille digitale, batteridrevne enhed med to dele, som danske forældre lægger i barnevognen, så de kan høre, når babyen vågner?", answer: "Hvad er en babyalarm?" },
+            { clue: "Hvad kaldes den gruppe af lokale mødre/forældre med jævnaldrende babyer, som sundhedsplejersken sammensætter, så man kan mødes og udveksle erfaringer?", answer: "Hvad er en mødregruppe (eller fædregruppe)?" },
+            { clue: "Hvad kalder man den bløde, aflange pude formet som en pølse eller halvmåne, som mange gravide og ammende bruger til støtte?", answer: "Hvad er en ammepude?" },
+          ],
+        },
+        {
+          name: "Vietnamesiske babytraditioner",
+          clues: [
+            { clue: "I vietnamesisk kultur fejrer man ikke kun barnets fødselsdag efter et år. Hvad kaldes den store, traditionelle fest, som afholdes præcis én måned efter fødslen?", answer: "Hvad er Đầy Tháng (eller \"Full Month\"-fest)?" },
+            { clue: "Under festen på barnets 1-års fødselsdag (Thôi Nôi) placeres barnet foran en række genstande (f.eks. en pen, en saks, en bog eller penge). Hvad symboliserer den ting, babyen rækker ud efter og vælger?", answer: "Hvad er barnets fremtidige personlighed, karriere eller skæbne?" },
+            { clue: "Efter fødslen følger mange vietnamesiske mødre en barselstradition kaldet At Cử (eller Nằm Than), hvor moderen hviler sig og skal holde sig varm. Hvilken slags mad og drikke undgår man typisk for kroppen?", answer: "Hvad er kolde drikke, rå grøntsager og is (man spiser varmende mad som ingefær, peber og tilberedte retter)?" },
+            { clue: "Hvilken traditionel ret serveres næsten altid til fejringer af en nyfødt, da den røde farve symboliserer held og god lykke i vietnamesisk kultur?", answer: "Hvad er Xôi Gấc (røde klæbrige ris lavet med gấc-frugt)?" },
+            { clue: "I ældre vietnamesisk folketro gav forældre ofte deres nyfødte baby et lidt \"grimt\" eller besynderligt kælenavn i den første tid. Hvorfor gjorde man det?", answer: "Hvad er for at skræmme onde ånder væk (så ånderne ikke opdagede, hvor smukt og værdifuldt barnet var, og tog det fra dem)?" },
+          ],
+        },
+        {
+          name: "Tredje gang i møllen",
+          clues: [
+            { clue: "Hvor stort et aldersspænd bliver der præcis mellem storebrødrene og den nye baby?", answer: "Hvad er 1 år og 10 måneder og 3 år og 8 måneder (forudsat slut sep./start okt.)" },
+            { clue: "Hvad var den største forskel på Ninas graviditet denne gang i forhold til, da hun ventede W og N?", answer: "Hvad er mere træt og kvalme (og mere snak end normalt)?" },
+            { clue: "Hvilken ting fra første barn fik forældrene aldrig brugt, men har helt styr på at undgå at købe/bruge denne gang?", answer: "Hvad er en sut?" },
+            { clue: "Hvad var det allerførste, W sagde eller gjorde, da han fik at vide, at der var en baby i mors mave?", answer: "Hvad var …? (udfyld selv)" },
+            { clue: "Hvilket råd eller vane fra første barn har Nina og Nico på forhånd aftalt at skrotte denne gang, fordi de er blevet mere afslappede forældre?", answer: "Hvad er tidligere smagsprøve på tv og søde sager?" },
+          ],
+        },
+        {
+          name: "Hvem er hvem?",
+          clues: [
+            { clue: "Hvem er det?", answer: "Hvem er Lilo?", photo: "photos/hvem/lilo.svg" },
+            { clue: "Hvem er det?", answer: "Hvem er W?", photo: "photos/hvem/w.svg" },
+            { clue: "Hvem er det?", answer: "Hvem er N?", photo: "photos/hvem/n.svg" },
+            { clue: "Hvem er det?", answer: "Hvem er Nico?", photo: "photos/hvem/nico.svg" },
+            { clue: "Hvem er det?", answer: "Hvem er Nina?", photo: "photos/hvem/nina.svg" },
+          ],
+        },
+      ],
+    };
+
+    const STORAGE_Q = "baby-jeopardy-questions";
+    const STORAGE_S = "baby-jeopardy-state";
+
+    const DEFAULTS_FP = (() => {
+      const s = JSON.stringify(DEFAULT_GAME);
+      let h = 5381;
+      for (let i = 0; i < s.length; i++) h = ((h * 33) + s.charCodeAt(i)) >>> 0;
+      return h;
+    })();
+
+    let GAME = (() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_Q));
+        if (saved && saved.defaultsFingerprint === DEFAULTS_FP && saved.categories) return saved;
+      } catch (e) { /* defaults */ }
+      const game = JSON.parse(JSON.stringify(DEFAULT_GAME));
+      game.defaultsFingerprint = DEFAULTS_FP;
+      return game;
+    })();
+
+    const state = { used: new Set(), teams: [], current: null, timerId: null };
+    const $ = (sel) => document.querySelector(sel);
+    const vals = () => GAME.values;
+    const cats = () => GAME.categories;
+
+    function buildBoard() {
+      const board = $("#board");
+      board.innerHTML = "";
+      board.style.gridTemplateColumns = `repeat(${cats().length}, 1fr)`;
+      cats().forEach((cat) => {
+        const el = document.createElement("div");
+        el.className = "cell category";
+        el.textContent = cat.name;
+        board.appendChild(el);
+      });
+      vals().forEach((value, row) => {
+        cats().forEach((cat, col) => {
+          const key = `${col}-${row}`;
+          const el = document.createElement("div");
+          el.className = "cell clue-cell" + (state.used.has(key) ? " used" : "");
+          el.textContent = "$" + value;
+          if (!state.used.has(key)) el.addEventListener("click", () => openClue(col, row));
+          board.appendChild(el);
+        });
+      });
+    }
+
+    function openClue(col, row) {
+      const key = `${col}-${row}`;
+      if (state.used.has(key)) return;
+      const cat = cats()[col];
+      const clue = cat.clues[row];
+      state.current = { col, row, key, value: vals()[row], clue, cat };
+
+      $("#clue-value").textContent = `${cat.name} — $${vals()[row]}`;
+      const answerEl = $("#clue-answer");
+      answerEl.classList.remove("revealed");
+      answerEl.textContent = clue.answer;
+      $("#award-buttons").classList.remove("visible");
+      const photoQ = $("#photo-question");
+      const answerPhotos = $("#answer-photos");
+      photoQ.classList.remove("visible");
+      photoQ.innerHTML = "";
+      answerPhotos.classList.remove("revealed");
+      answerPhotos.innerHTML = "";
+      $("#reveal-btn").style.display = "";
+      $("#clue-card").classList.remove("question-hidden");
+      $("#clue-card").classList.remove("answer-shown");
+
+      if (clue.photo) {
+        $("#clue-text").textContent = clue.clue || "Hvem er det?";
+        const qImg = document.createElement("img");
+        qImg.src = encodeURI(clue.photo);
+        qImg.alt = "Hvem er det?";
+        photoQ.appendChild(qImg);
+        photoQ.classList.add("visible");
+        const aImg = document.createElement("img");
+        aImg.src = encodeURI(clue.photo);
+        aImg.alt = clue.answer;
+        answerPhotos.appendChild(aImg);
+      } else {
+        $("#clue-text").textContent = clue.clue;
+      }
+
+      $("#overlay").classList.add("open");
+      startTimer(30);
+    }
+
+    function revealAnswer() {
+      $("#clue-card").classList.remove("question-hidden");
+      $("#clue-card").classList.add("answer-shown");
+      $("#clue-answer").classList.add("revealed");
+      $("#answer-photos").classList.add("revealed");
+      $("#reveal-btn").style.display = "none";
+      stopTimer();
+      buildAwardButtons();
+      $("#award-buttons").classList.add("visible");
+    }
+
+    function closeClue(markUsed = true) {
+      if (markUsed && state.current) state.used.add(state.current.key);
+      state.current = null;
+      stopTimer();
+      $("#overlay").classList.remove("open");
+      buildBoard();
+      saveState();
+    }
+
+    function buildAwardButtons() {
+      const wrap = $("#award-buttons");
+      wrap.innerHTML = "";
+      if (state.teams.length === 0) {
+        wrap.textContent = "Add teams to award points!";
+        return;
+      }
+      state.teams.forEach((team, i) => {
+        const group = document.createElement("div");
+        group.className = "award-group";
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = team.name;
+        const rowEl = document.createElement("div");
+        rowEl.className = "row";
+        const yes = document.createElement("button");
+        yes.className = "correct";
+        yes.textContent = `+$${state.current.value}`;
+        yes.addEventListener("click", () => {
+          state.teams[i].score += state.current.value;
+          renderTeams();
+          closeClue(true);
+        });
+        const no = document.createElement("button");
+        no.className = "wrong";
+        no.textContent = `−$${state.current.value}`;
+        no.addEventListener("click", () => {
+          state.teams[i].score -= state.current.value;
+          renderTeams();
+          saveState();
+          no.disabled = true;
+          no.style.opacity = 0.4;
+        });
+        rowEl.appendChild(yes);
+        rowEl.appendChild(no);
+        group.appendChild(label);
+        group.appendChild(rowEl);
+        wrap.appendChild(group);
+      });
+    }
+
+    function startTimer(seconds) {
+      stopTimer();
+      const bar = $("#timer-bar");
+      const start = Date.now();
+      bar.style.width = "100%";
+      state.timerId = setInterval(() => {
+        const elapsed = (Date.now() - start) / 1000;
+        const pct = Math.max(0, 1 - elapsed / seconds);
+        bar.style.width = pct * 100 + "%";
+        if (pct <= 0) stopTimer();
+      }, 200);
+    }
+    function stopTimer() {
+      if (state.timerId) clearInterval(state.timerId);
+      state.timerId = null;
+      $("#timer-bar").style.width = "100%";
+    }
+
+    function addTeam(name) {
+      state.teams.push({ name: name || `Team ${state.teams.length + 1}`, score: 0 });
+      renderTeams();
+      saveState();
+    }
+
+    function renderTeams() {
+      const wrap = $("#teams");
+      wrap.innerHTML = "";
+      const maxScore = Math.max(...state.teams.map((t) => t.score), 0);
+      state.teams.forEach((team, i) => {
+        const el = document.createElement("div");
+        el.className = "team" + (team.score === maxScore && team.score > 0 ? " leader" : "");
+        const remove = document.createElement("button");
+        remove.className = "remove-team";
+        remove.textContent = "✕";
+        remove.addEventListener("click", () => {
+          state.teams.splice(i, 1);
+          renderTeams();
+          saveState();
+        });
+        const nameInput = document.createElement("input");
+        nameInput.className = "team-name";
+        nameInput.value = team.name;
+        nameInput.addEventListener("change", (e) => {
+          state.teams[i].name = e.target.value;
+          saveState();
+        });
+        const score = document.createElement("div");
+        score.className = "team-score" + (team.score < 0 ? " negative" : "");
+        score.textContent = (team.score < 0 ? "−$" : "$") + Math.abs(team.score).toLocaleString();
+        const adjust = document.createElement("div");
+        adjust.className = "adjust";
+        [-100, 100].forEach((delta) => {
+          const b = document.createElement("button");
+          b.textContent = delta > 0 ? "+100" : "−100";
+          b.addEventListener("click", () => {
+            state.teams[i].score += delta;
+            renderTeams();
+            saveState();
+          });
+          adjust.appendChild(b);
+        });
+        el.appendChild(remove);
+        el.appendChild(nameInput);
+        el.appendChild(score);
+        el.appendChild(adjust);
+        wrap.appendChild(el);
+      });
+    }
+
+    function openEditor() {
+      const body = $("#editor-body");
+      body.innerHTML = "";
+      GAME.categories.forEach((cat, catIdx) => {
+        const sec = document.createElement("div");
+        sec.className = "editor-cat";
+        sec.dataset.ci = catIdx;
+        const nameInput = document.createElement("input");
+        nameInput.className = "cat-name-input";
+        nameInput.value = cat.name;
+        sec.appendChild(nameInput);
+        cat.clues.forEach((clue, ri) => {
+          const row = document.createElement("div");
+          row.className = "editor-clue";
+          const tag = document.createElement("div");
+          tag.className = "value-tag";
+          tag.textContent = "$" + GAME.values[ri];
+          const fields = document.createElement("div");
+          fields.className = "fields";
+          const clueField = document.createElement("textarea");
+          clueField.className = "clue-input";
+          clueField.value = clue.clue || "";
+          const answerField = document.createElement("input");
+          answerField.className = "answer-input";
+          answerField.value = clue.answer || "";
+          fields.appendChild(clueField);
+          fields.appendChild(answerField);
+          if (clue.photo) {
+            const photoField = document.createElement("input");
+            photoField.className = "photo-input";
+            photoField.value = clue.photo;
+            photoField.placeholder = "Photo path, e.g. photos/hvem/lilo.jpg";
+            fields.appendChild(photoField);
+          }
+          row.appendChild(tag);
+          row.appendChild(fields);
+          sec.appendChild(row);
+        });
+        body.appendChild(sec);
+      });
+      $("#editor-overlay").classList.add("open");
+    }
+    function closeEditor() { $("#editor-overlay").classList.remove("open"); }
+    function saveEditor() {
+      $("#editor-body").querySelectorAll(".editor-cat").forEach((sec) => {
+        const cat = GAME.categories[+sec.dataset.ci];
+        cat.name = sec.querySelector(".cat-name-input").value.trim() || cat.name;
+        sec.querySelectorAll(".editor-clue").forEach((row, ri) => {
+          const clue = cat.clues[ri];
+          clue.clue = row.querySelector(".clue-input").value.trim();
+          clue.answer = row.querySelector(".answer-input").value.trim();
+          const photoIn = row.querySelector(".photo-input");
+          if (photoIn) clue.photo = photoIn.value.trim();
+        });
+      });
+      GAME.defaultsFingerprint = DEFAULTS_FP;
+      localStorage.setItem(STORAGE_Q, JSON.stringify(GAME));
+      buildBoard();
+      closeEditor();
+    }
+    function restoreDefaultQuestions() {
+      GAME = JSON.parse(JSON.stringify(DEFAULT_GAME));
+      GAME.defaultsFingerprint = DEFAULTS_FP;
+      localStorage.removeItem(STORAGE_Q);
+      buildBoard();
+      openEditor();
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_S, JSON.stringify({ used: [...state.used], teams: state.teams }));
+    }
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_S));
+        if (saved) {
+          state.used = new Set(saved.used || []);
+          state.teams = saved.teams || [];
+        }
+      } catch (e) { /* fresh */ }
+    }
+
+    function armButton(btn, armedLabel, action) {
+      const originalLabel = btn.textContent;
+      let timer = null;
+      btn.addEventListener("click", () => {
+        if (btn.classList.contains("armed")) {
+          clearTimeout(timer);
+          btn.classList.remove("armed");
+          btn.textContent = originalLabel;
+          action();
+        } else {
+          btn.classList.add("armed");
+          btn.textContent = armedLabel;
+          timer = setTimeout(() => {
+            btn.classList.remove("armed");
+            btn.textContent = originalLabel;
+          }, 3000);
+        }
+      });
+    }
+
+    $("#reveal-btn").addEventListener("click", revealAnswer);
+    $("#close-btn").addEventListener("click", () => closeClue(true));
+    $("#add-team").addEventListener("click", () => addTeam());
+    $("#edit-questions").addEventListener("click", openEditor);
+    $("#editor-save").addEventListener("click", saveEditor);
+    $("#editor-cancel").addEventListener("click", closeEditor);
+    armButton($("#editor-defaults"), "Really replace all? Click again", restoreDefaultQuestions);
+    armButton($("#new-game"), "Reset the board? Click again", () => {
+      state.used.clear();
+      buildBoard();
+      saveState();
+    });
+    armButton($("#reset-scores"), "Zero all scores? Click again", () => {
+      state.teams.forEach((t) => (t.score = 0));
+      renderTeams();
+      saveState();
+    });
+    document.addEventListener("keydown", (e) => {
+      if ($("#editor-overlay").classList.contains("open")) {
+        if (e.key === "Escape") closeEditor();
+        return;
+      }
+      if (!$("#overlay").classList.contains("open")) return;
+      if (e.key === "Escape") closeClue(true);
+      if (e.key === " ") {
+        e.preventDefault();
+        if ($("#reveal-btn").style.display !== "none") $("#clue-card").classList.toggle("question-hidden");
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if ($("#reveal-btn").style.display !== "none") revealAnswer();
+      }
+    });
+
+    loadState();
+    if (state.teams.length === 0) {
+      addTeam("Team 1");
+      addTeam("Team 2");
+    }
+    buildBoard();
+    renderTeams();
+  </script>
+</body>
+</html>
